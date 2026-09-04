@@ -128,12 +128,18 @@ pipeline {
                 // en el droplet de 2 GB dos boots de Rails en paralelo terminan con uno
                 // matado por memoria (exit 137, build production #6). Si db:prepare falla,
                 // el contenedor muere y este health check falla el build igual.
+                // Un arranque en frio (db:prepare + Puma + Thruster) en este droplet puede
+                // pasar de 2 min (production #7 se agoto a los 120 s con la app aun subiendo),
+                // asi que se esperan hasta 240 s. Si el contenedor muere antes, se corta al tiro.
                 sh '''
-                    for i in $(seq 1 40); do
+                    for i in $(seq 1 80); do
                       if curl -fsS "http://127.0.0.1:$DEPLOY_PORT/health"; then echo; exit 0; fi
+                      if [ "$(docker inspect -f '{{.State.Running}}' "$APP_NAME" 2>/dev/null)" != "true" ]; then
+                        echo "El contenedor $APP_NAME no esta corriendo"; docker logs --tail 50 "$APP_NAME"; exit 1
+                      fi
                       sleep 3
                     done
-                    docker logs --tail 50 "$APP_NAME"; exit 1
+                    echo "Timeout: $APP_NAME no respondio en 240 s"; docker logs --tail 50 "$APP_NAME"; exit 1
                 '''
             }
         }
