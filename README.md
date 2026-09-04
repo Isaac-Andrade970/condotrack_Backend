@@ -54,6 +54,11 @@ El contenedor escucha en el puerto **80** (Thruster delante de Puma).
 
 ## CI/CD (Jenkins)
 
+La unica CI del repo es Jenkins (no hay workflows de GitHub Actions). Para que el estado de
+cada build aparezca como *check* en los PRs de GitHub, el job Multibranch necesita una
+credencial de GitHub (usuario + token) en **Branch Sources -> GitHub -> Credentials**;
+sin ella Jenkins usa la API anonima, no puede publicar estados y choca con el rate limit.
+
 Job: <https://jenkins.frubilarz.cl/job/condotrack-backend/> (Multibranch Pipeline sobre
 este repo; cada rama y PR obtiene su propio pipeline a partir del `Jenkinsfile`).
 
