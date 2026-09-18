@@ -9,7 +9,10 @@ Rails.application.routes.draw do
   post "/login", to: "auth#login"
   get "/me", to: "auth#me"
 
-  # Los recursos de negocio (reportes, categorias, comentarios) se agregan
-  # en las ramas feature/* de cada integrante — no tocar aquí para evitar
-  # conflictos de merge entre PRs paralelos.
+  resources :categorias, only: [:index, :create, :update, :destroy]
+
+  resources :reportes, only: [:index, :show, :create, :update, :destroy] do
+    # Alexis: agrega aquí el nested resource de comentarios, ej.
+    # resources :comentarios, only: [:index, :create, :update, :destroy]
+  end
 end
