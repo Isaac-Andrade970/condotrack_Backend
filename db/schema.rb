@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_18_000002) do
+ActiveRecord::Schema[8.1].define(version: 2026_09_21_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -20,6 +20,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_000002) do
     t.string "nombre", null: false
     t.datetime "updated_at", null: false
     t.index ["nombre"], name: "index_categorias_on_nombre", unique: true
+  end
+
+  create_table "comentarios", force: :cascade do |t|
+    t.text "contenido", null: false
+    t.datetime "created_at", null: false
+    t.bigint "reporte_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "usuario_id", null: false
+    t.index ["reporte_id"], name: "index_comentarios_on_reporte_id"
+    t.index ["usuario_id"], name: "index_comentarios_on_usuario_id"
   end
 
   create_table "reportes", force: :cascade do |t|
@@ -44,6 +54,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_18_000002) do
     t.index ["email"], name: "index_users_on_email", unique: true
   end
 
+  add_foreign_key "comentarios", "reportes"
+  add_foreign_key "comentarios", "users", column: "usuario_id"
   add_foreign_key "reportes", "categorias"
   add_foreign_key "reportes", "users", column: "usuario_id"
 end
