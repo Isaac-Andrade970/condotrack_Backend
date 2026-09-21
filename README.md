@@ -3,6 +3,61 @@
 Backend del proyecto CondoTrack (tareas 0 a 3). API en **Ruby on Rails 8.1** (modo API)
 con **PostgreSQL**.
 
+## Problema que resuelve
+
+En condominios y edificios, los residentes reportan fallas (ascensores, filtraciones,
+luminarias, ruidos molestos, áreas comunes dañadas) por canales informales — WhatsApp,
+conversaciones con el conserje, un cuaderno físico — sin trazabilidad ni métricas. Este
+backend expone la API REST que permite a los residentes reportar incidencias y a
+conserjería/administración gestionarlas desde un panel centralizado. En esta etapa
+(Tarea 1) no hay roles diferenciados: cualquier usuario autenticado puede operar los
+3 recursos.
+
+## Arquitectura
+
+```
+┌─────────────────────┐
+│   Web Frontend       │
+│   React (Vite)        │
+└──────────┬───────────┘
+           │ REST / JSON (JWT en header Authorization)
+           ▼
+┌─────────────────────┐
+│   Backend             │
+│   Ruby on Rails 8.1    │  (API-only, sin vistas)
+└──────────┬───────────┘
+           ▼
+┌─────────────────────┐
+│   PostgreSQL           │
+└─────────────────────┘
+```
+
+El backend no mantiene sesión de servidor: autentica cada request vía JWT firmado con
+`Rails.application.secret_key_base` (`app/lib/json_web_token.rb`), decodificado en
+`ApplicationController#authenticate_request`.
+
+## Modelo de datos
+
+```
+User (residentes/conserjería, sin roles todavía)
+ │ email:string único · password_digest:string · nombre:string
+ │
+ │ 1:N
+ ▼
+Reporte
+ │ titulo:string · descripcion:text
+ │ estado:string (pendiente | en_progreso | resuelto)
+ │ torre_unidad:string
+ │ categoria_id (FK) · usuario_id (FK)
+ │
+ ├── N:1 → Categoria (nombre:string único · descripcion:text)
+ │
+ │ 1:N
+ ▼
+Comentario
+  contenido:text · reporte_id (FK) · usuario_id (FK)
+```
+
 ## Requisitos
 
 - Ruby 3.3.7 (ver `.ruby-version`)
@@ -95,3 +150,20 @@ El PostgreSQL de test se destruye siempre al terminar el build (`post { always }
 | `condotrack-backend-database-url` | Secret text | `postgres://user:pass@host:5432/condotrack_backend_production` |
 
 Sin ellas el stage **Deploy** falla; las demas etapas no las necesitan.
+
+## Producción
+
+URL: <https://apicondotrack.frubilarz.cl> · Health check: <https://apicondotrack.frubilarz.cl/health>
+
+## Credenciales de prueba
+
+No hay usuarios precargados — la API permite registro abierto. Para probarla:
+
+```bash
+curl -X POST https://apicondotrack.frubilarz.cl/signup \
+  -H "Content-Type: application/json" \
+  -d '{"email":"tuemail@ejemplo.cl","password":"password123","nombre":"Tu Nombre"}'
+```
+
+Devuelve `{ token, user }`; usa ese `token` como `Authorization: Bearer <token>` en el
+resto de los endpoints.
