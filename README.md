@@ -24,6 +24,13 @@ Endpoints base:
 - `GET /health` -> `200 {"status":"ok","service":"condotrack-backend","time":"..."}` (usado por el pipeline)
 - `GET /up` -> health check por defecto de Rails
 
+## Endpoints de la API
+
+- `POST /signup`, `POST /login`, `GET /me` — autenticación
+- `GET/POST /categorias`, `PATCH/DELETE /categorias/:id`
+- `GET/POST /reportes`, `GET/PATCH/DELETE /reportes/:id`
+- `GET/POST /reportes/:reporte_id/comentarios`, `DELETE /reportes/:reporte_id/comentarios/:id`
+
 ## Tests, lint y seguridad
 
 ```bash
