@@ -1,6 +1,6 @@
 class ComentariosController < ApplicationController
   before_action :set_reporte
-  before_action :set_comentario, only: [:destroy]
+  before_action :set_comentario, only: [:update, :destroy]
 
   def index
     render json: @reporte.comentarios.order(created_at: :asc)
@@ -14,6 +14,14 @@ class ComentariosController < ApplicationController
       render json: comentario, status: :created
     else
       render json: { errors: comentario.errors.full_messages }, status: :unprocessable_entity
+    end
+  end
+
+  def update
+    if @comentario.update(comentario_params)
+      render json: @comentario
+    else
+      render json: { errors: @comentario.errors.full_messages }, status: :unprocessable_entity
     end
   end
 
