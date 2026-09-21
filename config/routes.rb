@@ -13,6 +13,6 @@ Rails.application.routes.draw do
 
   resources :reportes, only: [:index, :show, :create, :update, :destroy] do
     # Alexis: agrega aquí el nested resource de comentarios, ej.
-    # resources :comentarios, only: [:index, :create, :update, :destroy]
+    resources :comentarios, only: [:index, :create, :update, :destroy]
   end
 end
