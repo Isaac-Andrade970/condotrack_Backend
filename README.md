@@ -136,9 +136,11 @@ Etapas que corren en **todas las ramas**:
 
 Solo en la rama **`production`**:
 
-8. **Deploy** - reemplaza el contenedor `condotrack-backend`, publicado en `127.0.0.1:4100`
-9. **Migrate** - `bin/rails db:migrate` dentro del contenedor
-10. **Health Check** - `curl -f http://127.0.0.1:4100/health`
+8. **Deploy** - reemplaza el contenedor `condotrack-backend`, publicado en `127.0.0.1:4100`.
+   Las migraciones las corre `bin/docker-entrypoint` (`rails db:prepare`) al arrancar; no hay
+   un stage Migrate aparte porque dos boots de Rails en paralelo agotan la memoria del droplet.
+9. **Health Check** - `curl -f http://127.0.0.1:4100/health`, esperando hasta 240 s (un arranque
+   en frio puede pasar de 2 min) y cortando de inmediato si el contenedor muere.
 
 El PostgreSQL de test se destruye siempre al terminar el build (`post { always }`).
 
@@ -146,10 +148,28 @@ El PostgreSQL de test se destruye siempre al terminar el build (`post { always }
 
 | ID | Tipo | Valor |
 |---|---|---|
-| `condotrack-backend-rails-master-key` | Secret text | contenido de `config/master.key` |
-| `condotrack-backend-database-url` | Secret text | `postgres://user:pass@host:5432/condotrack_backend_production` |
+| `condotrack-backend-rails-master-key` | Secret text | contenido de `config/master.key` (32 caracteres hex, sin salto de linea) |
+| `condotrack-backend-database-url` | Secret text | `postgres://user:pass@host:5432` (el nombre de base al final es opcional y se ignora, ver abajo) |
 
 Sin ellas el stage **Deploy** falla; las demas etapas no las necesitan.
+
+#### Base de datos de produccion
+
+En produccion la app usa **cuatro bases** en el mismo PostgreSQL (Solid Cache / Queue / Cable):
+`condotrack_backend_production`, `condotrack_backend_production_cache`,
+`condotrack_backend_production_queue` y `condotrack_backend_production_cable`.
+`config/database.yml` toma host, puerto, usuario y password de `DATABASE_URL` para las cuatro
+y descarta el nombre de base que traiga la URL. El contenedor las crea al arrancar
+(`bin/rails db:prepare`), asi que el usuario de la URL necesita permiso `CREATEDB` (o hay que
+crearlas a mano antes del primer deploy). El PostgreSQL debe ser alcanzable desde la red
+Docker `course-net`, por ejemplo un contenedor `postgres:16-alpine` conectado a esa red:
+
+```bash
+docker run -d --name condotrack-prod-db --network course-net --restart unless-stopped \
+  -e POSTGRES_USER=condotrack -e POSTGRES_PASSWORD=<password> \
+  -v condotrack-prod-db:/var/lib/postgresql/data postgres:16-alpine
+# credencial: postgres://condotrack:<password>@condotrack-prod-db:5432
+```
 
 ## Producción
 
