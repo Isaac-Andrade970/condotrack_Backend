@@ -4,4 +4,15 @@ Rails.application.routes.draw do
 
   # Health check propio, usado por el pipeline de Jenkins.
   get "health" => "health#show", as: :health
+
+  post "/signup", to: "auth#signup"
+  post "/login", to: "auth#login"
+  get "/me", to: "auth#me"
+
+  resources :categorias, only: [:index, :create, :update, :destroy]
+
+  resources :reportes, only: [:index, :show, :create, :update, :destroy] do
+    # Alexis: agrega aquí el nested resource de comentarios, ej.
+    resources :comentarios, only: [:index, :create, :update, :destroy]
+  end
 end
