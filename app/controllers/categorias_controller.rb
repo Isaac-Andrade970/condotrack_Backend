@@ -1,5 +1,5 @@
 class CategoriasController < ApplicationController
-  before_action :set_categoria, only: [:update, :destroy]
+  before_action :set_categoria, only: [ :update, :destroy ]
 
   def index
     render json: Categoria.all
