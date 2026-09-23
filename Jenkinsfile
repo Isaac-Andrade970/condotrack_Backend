@@ -131,9 +131,12 @@ pipeline {
                 // Un arranque en frio (db:prepare + Puma + Thruster) en este droplet puede
                 // pasar de 2 min (production #7 se agoto a los 120 s con la app aun subiendo),
                 // asi que se esperan hasta 240 s. Si el contenedor muere antes, se corta al tiro.
+                // Jenkins corre dentro de un contenedor: su 127.0.0.1 no es el del host, asi que
+                // el puerto publicado ($DEPLOY_PORT) no es alcanzable desde aqui. Se consulta el
+                // health check desde dentro del contenedor de la app (Thruster escucha en :80).
                 sh '''
                     for i in $(seq 1 80); do
-                      if curl -fsS "http://127.0.0.1:$DEPLOY_PORT/health"; then echo; exit 0; fi
+                      if docker exec "$APP_NAME" curl -fsS http://127.0.0.1:80/health; then echo; exit 0; fi
                       if [ "$(docker inspect -f '{{.State.Running}}' "$APP_NAME" 2>/dev/null)" != "true" ]; then
                         echo "El contenedor $APP_NAME no esta corriendo"; docker logs --tail 50 "$APP_NAME"; exit 1
                       fi
