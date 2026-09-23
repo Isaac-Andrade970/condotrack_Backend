@@ -1,5 +1,5 @@
 class ReportesController < ApplicationController
-  before_action :set_reporte, only: [:show, :update, :destroy]
+  before_action :set_reporte, only: [ :show, :update, :destroy ]
 
   def index
     render json: Reporte.all

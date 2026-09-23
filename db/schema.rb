@@ -19,7 +19,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_000001) do
     t.text "descripcion"
     t.string "nombre", null: false
     t.datetime "updated_at", null: false
-    t.index ["nombre"], name: "index_categorias_on_nombre", unique: true
+    t.index [ "nombre" ], name: "index_categorias_on_nombre", unique: true
   end
 
   create_table "comentarios", force: :cascade do |t|
@@ -28,8 +28,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_000001) do
     t.bigint "reporte_id", null: false
     t.datetime "updated_at", null: false
     t.bigint "usuario_id", null: false
-    t.index ["reporte_id"], name: "index_comentarios_on_reporte_id"
-    t.index ["usuario_id"], name: "index_comentarios_on_usuario_id"
+    t.index [ "reporte_id" ], name: "index_comentarios_on_reporte_id"
+    t.index [ "usuario_id" ], name: "index_comentarios_on_usuario_id"
   end
 
   create_table "reportes", force: :cascade do |t|
@@ -41,8 +41,8 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_000001) do
     t.string "torre_unidad"
     t.datetime "updated_at", null: false
     t.bigint "usuario_id", null: false
-    t.index ["categoria_id"], name: "index_reportes_on_categoria_id"
-    t.index ["usuario_id"], name: "index_reportes_on_usuario_id"
+    t.index [ "categoria_id" ], name: "index_reportes_on_categoria_id"
+    t.index [ "usuario_id" ], name: "index_reportes_on_usuario_id"
   end
 
   create_table "users", force: :cascade do |t|
@@ -51,7 +51,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_000001) do
     t.string "nombre", null: false
     t.string "password_digest", null: false
     t.datetime "updated_at", null: false
-    t.index ["email"], name: "index_users_on_email", unique: true
+    t.index [ "email" ], name: "index_users_on_email", unique: true
   end
 
   add_foreign_key "comentarios", "reportes"

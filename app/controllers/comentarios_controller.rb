@@ -1,6 +1,6 @@
 class ComentariosController < ApplicationController
   before_action :set_reporte
-  before_action :set_comentario, only: [:update, :destroy]
+  before_action :set_comentario, only: [ :update, :destroy ]
 
   def index
     render json: @reporte.comentarios.order(created_at: :asc)

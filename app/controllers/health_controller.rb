@@ -1,5 +1,5 @@
 class HealthController < ApplicationController
-  skip_before_action :authenticate_request, only: [:show]
+  skip_before_action :authenticate_request, only: [ :show ]
 
   # Endpoint liviano para el stage "Health Check" del pipeline y monitoreo.
   def show
