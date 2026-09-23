@@ -139,7 +139,8 @@ Solo en la rama **`production`**:
 8. **Deploy** - reemplaza el contenedor `condotrack-backend`, publicado en `127.0.0.1:4100`.
    Las migraciones las corre `bin/docker-entrypoint` (`rails db:prepare`) al arrancar; no hay
    un stage Migrate aparte porque dos boots de Rails en paralelo agotan la memoria del droplet.
-9. **Health Check** - `curl -f http://127.0.0.1:4100/health`, esperando hasta 240 s (un arranque
+9. **Health Check** - `docker exec condotrack-backend curl -f http://127.0.0.1:80/health` (Jenkins corre en un
+   contenedor y no alcanza el puerto publicado en el host), esperando hasta 240 s (un arranque
    en frio puede pasar de 2 min) y cortando de inmediato si el contenedor muere.
 
 El PostgreSQL de test se destruye siempre al terminar el build (`post { always }`).
