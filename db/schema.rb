@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_21_000001) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_19_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -43,6 +43,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_21_000001) do
     t.bigint "usuario_id", null: false
     t.index [ "categoria_id" ], name: "index_reportes_on_categoria_id"
     t.index [ "usuario_id" ], name: "index_reportes_on_usuario_id"
+    t.check_constraint "estado::text = ANY (ARRAY['pendiente'::character varying, 'en_progreso'::character varying, 'resuelto'::character varying]::text[])", name: "reportes_estado_valido"
   end
 
   create_table "users", force: :cascade do |t|
