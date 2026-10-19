@@ -1,9 +1,13 @@
 class ComentariosController < ApplicationController
   before_action :set_reporte
   before_action :set_comentario, only: [ :update, :destroy ]
+  before_action -> { authorize_owner!(@comentario) }, only: [ :update, :destroy ]
 
+  # includes(:usuario) carga los autores en una sola consulta (evita N+1 al
+  # serializar usuario_nombre).
   def index
-    render json: @reporte.comentarios.order(created_at: :asc)
+    comentarios = paginate(@reporte.comentarios.includes(:usuario).order(:created_at, :id))
+    render json: comentarios.map(&:as_json_with_author)
   end
 
   def create
@@ -11,7 +15,7 @@ class ComentariosController < ApplicationController
     comentario.usuario = current_user
 
     if comentario.save
-      render json: comentario, status: :created
+      render json: comentario.as_json_with_author, status: :created
     else
       render json: { errors: comentario.errors.full_messages }, status: :unprocessable_entity
     end
@@ -19,7 +23,7 @@ class ComentariosController < ApplicationController
 
   def update
     if @comentario.update(comentario_params)
-      render json: @comentario
+      render json: @comentario.as_json_with_author
     else
       render json: { errors: @comentario.errors.full_messages }, status: :unprocessable_entity
     end
@@ -34,14 +38,10 @@ class ComentariosController < ApplicationController
 
   def set_reporte
     @reporte = Reporte.find(params[:reporte_id])
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: "Reporte no encontrado" }, status: :not_found
   end
 
   def set_comentario
     @comentario = @reporte.comentarios.find(params[:id])
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: "Comentario no encontrado" }, status: :not_found
   end
 
   def comentario_params
