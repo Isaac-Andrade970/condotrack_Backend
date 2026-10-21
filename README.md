@@ -84,7 +84,33 @@ Endpoints base:
 - `POST /signup`, `POST /login`, `GET /me` — autenticación
 - `GET/POST /categorias`, `PATCH/DELETE /categorias/:id`
 - `GET/POST /reportes`, `GET/PATCH/DELETE /reportes/:id`
-- `GET/POST /reportes/:reporte_id/comentarios`, `DELETE /reportes/:reporte_id/comentarios/:id`
+- `GET/POST /reportes/:reporte_id/comentarios`, `PATCH/DELETE /reportes/:reporte_id/comentarios/:id`
+
+Reglas de la API:
+
+- Todo (salvo `/signup`, `/login`, `/health` y `/up`) requiere `Authorization: Bearer <token>`; sin token → `401`.
+- Solo el **autor** puede editar o eliminar un reporte o un comentario; otro usuario → `403`.
+- `DELETE /categorias/:id` con reportes asociados → `409` (no se borra).
+- Errores en JSON: `404` (recurso o ruta inexistente), `400` (JSON mal formado), `422` (validación, con `errors`).
+- Los listados (`/reportes`, `/categorias`, comentarios) aceptan paginación opcional con
+  `?page=1&per_page=20` (máx. 100) y devuelven el total en el header `X-Total-Count`.
+  Sin esos parámetros devuelven todo, ordenado.
+- Los comentarios incluyen `usuario_nombre` (nombre del autor).
+
+## Variables de entorno
+
+| Variable | Para qué | Por defecto |
+|---|---|---|
+| `DATABASE_URL` | PostgreSQL en producción (credencial de Jenkins) | — |
+| `RAILS_MASTER_KEY` | Desencripta `credentials.yml.enc` (de ahí sale `secret_key_base`, con el que se firma el JWT) | — |
+| `CORS_ORIGINS` | Orígenes permitidos, separados por coma | Vercel, `condotrack.frubilarz.cl` y `localhost:5173` |
+| `CONDOTRACK_DB_USERNAME` / `_PASSWORD` / `_HOST` | Conexión PostgreSQL en desarrollo | `condotrack_backend` / `condotrack_dev_pw` / `localhost` |
+| `CONDOTRACK_DISABLE_BOOTSNAP` | Desactiva bootsnap en Windows con rutas con tilde o ñ | — |
+
+## Datos de ejemplo (seeds)
+
+`bin/rails db:seed` crea (de forma idempotente) 2 usuarios, 5 categorías, 3 reportes y 2 comentarios.
+Usuarios de prueba: `demo@condotrack.cl` y `vecino@condotrack.cl`, ambos con clave `password123`.
 
 ## Tests, lint y seguridad
 
@@ -178,7 +204,9 @@ URL: <https://apicondotrack.frubilarz.cl> · Health check: <https://apicondotrac
 
 ## Credenciales de prueba
 
-No hay usuarios precargados — la API permite registro abierto. Para probarla:
+En producción no hay usuarios precargados (las seeds no se ejecutan solas en el deploy) — la API
+permite registro abierto. En desarrollo, `bin/rails db:seed` crea los usuarios demo (ver arriba).
+Para probar la API en producción:
 
 ```bash
 curl -X POST https://apicondotrack.frubilarz.cl/signup \

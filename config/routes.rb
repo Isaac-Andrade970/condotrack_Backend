@@ -12,7 +12,11 @@ Rails.application.routes.draw do
   resources :categorias, only: [ :index, :create, :update, :destroy ]
 
   resources :reportes, only: [ :index, :show, :create, :update, :destroy ] do
-    # Alexis: agrega aquí el nested resource de comentarios, ej.
     resources :comentarios, only: [ :index, :create, :update, :destroy ]
   end
+
+  # Cualquier otra ruta responde 404 en JSON (en vez de cuerpo vacío). Debe ir
+  # al final y excluye /rails/* (rutas internas de los engines de Rails).
+  match "*path", to: "errors#route_not_found", via: :all,
+    constraints: ->(request) { !request.path.start_with?("/rails/") }
 end
