@@ -2,7 +2,7 @@ class CategoriasController < ApplicationController
   before_action :set_categoria, only: [ :update, :destroy ]
 
   def index
-    render json: Categoria.all
+    render json: paginate(Categoria.order(:nombre, :id))
   end
 
   def create
@@ -23,17 +23,21 @@ class CategoriasController < ApplicationController
     end
   end
 
+  # Categoria tiene has_many :reportes con restrict_with_error: si hay reportes
+  # asociados destroy devuelve false, así que no se puede responder 204 a ciegas.
   def destroy
-    @categoria.destroy
-    head :no_content
+    if @categoria.destroy
+      head :no_content
+    else
+      render json: { errors: [ "No se puede eliminar la categoría porque tiene reportes asociados" ] },
+        status: :conflict
+    end
   end
 
   private
 
   def set_categoria
     @categoria = Categoria.find(params[:id])
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: "Categoría no encontrada" }, status: :not_found
   end
 
   def categoria_params

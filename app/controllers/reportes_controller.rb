@@ -1,8 +1,9 @@
 class ReportesController < ApplicationController
   before_action :set_reporte, only: [ :show, :update, :destroy ]
+  before_action -> { authorize_owner!(@reporte) }, only: [ :update, :destroy ]
 
   def index
-    render json: Reporte.all
+    render json: paginate(Reporte.order(:created_at, :id))
   end
 
   def show
@@ -36,8 +37,6 @@ class ReportesController < ApplicationController
 
   def set_reporte
     @reporte = Reporte.find(params[:id])
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: "Reporte no encontrado" }, status: :not_found
   end
 
   def reporte_params
