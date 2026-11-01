@@ -39,8 +39,9 @@ El backend no mantiene sesión de servidor: autentica cada request vía JWT firm
 ## Modelo de datos
 
 ```
-User (residentes/conserjería, sin roles todavía)
+User (residentes y administración)
  │ email:string único · password_digest:string · nombre:string
+ │ rol:string (residente | administrador, por defecto residente)
  │
  │ 1:N
  ▼
@@ -89,6 +90,8 @@ Endpoints base:
 Reglas de la API:
 
 - Todo (salvo `/signup`, `/login`, `/health` y `/up`) requiere `Authorization: Bearer <token>`; sin token → `401`.
+- Cada usuario tiene un **rol** (`residente` o `administrador`) guardado en `users.rol`. `/login`, `/signup` y `/me`
+  devuelven `rol` dentro de `user`. El signup **ignora** cualquier `rol` enviado: todo usuario nuevo es `residente`.
 - Solo el **autor** puede editar o eliminar un reporte o un comentario; otro usuario → `403`.
 - `DELETE /categorias/:id` con reportes asociados → `409` (no se borra).
 - Errores en JSON: `404` (recurso o ruta inexistente), `400` (JSON mal formado), `422` (validación, con `errors`).

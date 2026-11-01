@@ -1,5 +1,31 @@
 # Changelog
 
+## Tarea 2 — roles de usuario (backend)
+
+Rama: `feature/roles-migracion` · Primer paso de la sección 7 del enunciado (roles y autorización). Las reglas de autorización por rol van en una rama aparte.
+
+### Agregado (feature)
+
+| # | Cambio | Dónde |
+|---|---|---|
+| 1 | Columna `users.rol` (`residente` por defecto, `administrador`) creada por migración, con **check constraint** en PostgreSQL. Los usuarios existentes quedan como `residente`. | migración `20261031000001`, `schema.rb`, `user.rb` |
+| 2 | `/login`, `/signup` y `/me` devuelven `rol` en el objeto `user`. | `auth_controller.rb` |
+| 3 | `User#administrador?` y la constante `User::ROLES`. | `user.rb` |
+
+### Seguridad
+
+- El signup **no permite `rol`** en los parámetros: todo usuario nuevo es `residente`. Si se aceptara, cualquiera podría registrarse como administrador. Hay un test que lo verifica y falla si se agrega `:rol` a los params permitidos.
+
+### Tests
+
+6 tests nuevos (43 en total, 109 aserciones): rol en `/signup`, `/login` y `/me`, el signup que ignora el rol, el modelo y el check constraint de la base.
+
+### Qué no hace todavía
+
+- No hay reglas de autorización por rol (ej. quién gestiona categorías): van en la rama `feature/autorizacion-por-rol`.
+- No hay seeds por rol ni usuario administrador: va en `feature/seeds-por-rol`. Hasta entonces no existe ningún administrador.
+- Al desplegar, la migración se aplica sola al arrancar el contenedor.
+
 ## Correcciones del feedback de la Tarea 1 — backend
 
 Rama: `fix/backend-feedback-tarea1` · Responde a los puntos de la sección B del feedback del docente.
