@@ -25,7 +25,18 @@ class ApplicationController < ActionController::API
   def authorize_owner!(record)
     return if record.usuario_id == current_user.id
 
-    render json: { error: "No tienes permiso para modificar este recurso" }, status: :forbidden
+    render_forbidden("No tienes permiso para modificar este recurso")
+  end
+
+  # Acciones reservadas al rol administrador (ej. gestionar categorías).
+  def authorize_admin!
+    return if current_user.administrador?
+
+    render_forbidden("Esta acción es solo para administradores")
+  end
+
+  def render_forbidden(mensaje)
+    render json: { error: mensaje }, status: :forbidden
   end
 
   # Paginación opcional: sin ?page ni ?per_page devuelve todo (compatible con el
