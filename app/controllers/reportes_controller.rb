@@ -1,6 +1,10 @@
 class ReportesController < ApplicationController
+  # Campos que solo puede cambiar el autor; el administrador solo cambia el estado.
+  CAMPOS_DE_CONTENIDO = %w[titulo descripcion torre_unidad categoria_id].freeze
+
   before_action :set_reporte, only: [ :show, :update, :destroy ]
-  before_action -> { authorize_owner!(@reporte) }, only: [ :update, :destroy ]
+  before_action :authorize_update!, only: :update
+  before_action -> { authorize_owner!(@reporte) }, only: :destroy
 
   def index
     render json: paginate(Reporte.order(:created_at, :id))
@@ -37,6 +41,16 @@ class ReportesController < ApplicationController
 
   def set_reporte
     @reporte = Reporte.find(params[:id])
+  end
+
+  # El autor edita todo su reporte. Un administrador ajeno solo puede cambiar el
+  # estado (gestión del reporte), no el contenido que escribió el residente.
+  def authorize_update!
+    return if @reporte.usuario_id == current_user.id
+    return authorize_owner!(@reporte) unless current_user.administrador?
+    return if (params.keys & CAMPOS_DE_CONTENIDO).empty?
+
+    render_forbidden("Un administrador solo puede cambiar el estado de un reporte ajeno")
   end
 
   def reporte_params
