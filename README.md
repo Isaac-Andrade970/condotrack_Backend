@@ -93,12 +93,31 @@ Reglas de la API:
 - Cada usuario tiene un **rol** (`residente` o `administrador`) guardado en `users.rol`. `/login`, `/signup` y `/me`
   devuelven `rol` dentro de `user`. El signup **ignora** cualquier `rol` enviado: todo usuario nuevo es `residente`.
 - Solo el **autor** puede editar o eliminar un reporte o un comentario; otro usuario → `403`.
+- Crear, editar y eliminar **categorías** es solo para el rol `administrador`; un residente recibe `403`
+  (listar sigue abierto a cualquier usuario autenticado).
+- Un `administrador` puede cambiar el **estado** de cualquier reporte (`PATCH` solo con `estado`). Si el `PATCH`
+  de un reporte ajeno trae `titulo`, `descripcion`, `torre_unidad` o `categoria_id` → `403`. Tampoco puede
+  eliminarlo ni tocar comentarios ajenos.
 - `DELETE /categorias/:id` con reportes asociados → `409` (no se borra).
 - Errores en JSON: `404` (recurso o ruta inexistente), `400` (JSON mal formado), `422` (validación, con `errors`).
 - Los listados (`/reportes`, `/categorias`, comentarios) aceptan paginación opcional con
   `?page=1&per_page=20` (máx. 100) y devuelven el total en el header `X-Total-Count`.
   Sin esos parámetros devuelven todo, ordenado.
 - Los comentarios incluyen `usuario_nombre` (nombre del autor).
+
+## Permisos por rol
+
+| Acción | Sin sesión | Residente | Administrador |
+|---|---|---|---|
+| Registrarse / iniciar sesión | Sí | — | — |
+| Ver reportes, categorías y comentarios | `401` | Sí | Sí |
+| Crear reporte y comentario | `401` | Sí | Sí |
+| Editar o eliminar **su** reporte / comentario | `401` | Sí | Sí |
+| Editar o eliminar reporte / comentario **ajeno** | `401` | `403` | `403` |
+| Cambiar el **estado** de un reporte ajeno | `401` | `403` | Sí |
+| Crear, editar o eliminar categorías | `401` | `403` | Sí |
+
+`401` = sin token válido. `403` = autenticado, pero sin permiso para esa acción.
 
 ## Variables de entorno
 

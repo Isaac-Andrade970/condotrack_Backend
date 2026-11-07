@@ -12,6 +12,17 @@ Rama: `feature/roles-migracion` · Primer paso de la sección 7 del enunciado (r
 | 2 | `/login`, `/signup` y `/me` devuelven `rol` en el objeto `user`. | `auth_controller.rb` |
 | 3 | `User#administrador?` y la constante `User::ROLES`. | `user.rb` |
 
+### Autorización por rol (rama `feature/autorizacion-por-rol`)
+
+| # | Regla | Dónde |
+|---|---|---|
+| 4 | Crear, editar y eliminar **categorías** es solo para `administrador`; un residente recibe `403`. Listar sigue abierto. | `categorias_controller.rb` |
+| 5 | Un `administrador` puede cambiar el **estado** de cualquier reporte. Si envía campos de contenido de un reporte ajeno (`titulo`, `descripcion`, `torre_unidad`, `categoria_id`) recibe `403`. | `reportes_controller.rb` |
+| 6 | Helpers `authorize_admin!` y `render_forbidden`. | `application_controller.rb` |
+
+La restricción por dueño (Tarea 1) se mantiene: el administrador **no** edita ni borra contenido ajeno, solo gestiona el estado. Matriz completa en el README.
+Tests: 12 nuevos en `autorizacion_test.rb` (55 en total, 140 aserciones). Si se quitan los guards, fallan 3 tests (categorías) y 1 (estado).
+
 ### Seguridad
 
 - El signup **no permite `rol`** en los parámetros: todo usuario nuevo es `residente`. Si se aceptara, cualquiera podría registrarse como administrador. Hay un test que lo verifica y falla si se agrega `:rol` a los params permitidos.
@@ -22,7 +33,6 @@ Rama: `feature/roles-migracion` · Primer paso de la sección 7 del enunciado (r
 
 ### Qué no hace todavía
 
-- No hay reglas de autorización por rol (ej. quién gestiona categorías): van en la rama `feature/autorizacion-por-rol`.
 - No hay seeds por rol ni usuario administrador: va en `feature/seeds-por-rol`. Hasta entonces no existe ningún administrador.
 - Al desplegar, la migración se aplica sola al arrancar el contenedor.
 
