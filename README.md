@@ -131,8 +131,17 @@ Reglas de la API:
 
 ## Datos de ejemplo (seeds)
 
-`bin/rails db:seed` crea (de forma idempotente) 2 usuarios, 5 categorías, 3 reportes y 2 comentarios.
-Usuarios de prueba: `demo@condotrack.cl` y `vecino@condotrack.cl`, ambos con clave `password123`.
+`bin/rails db:seed` crea (de forma idempotente) 3 usuarios, 5 categorías, 3 reportes y 2 comentarios.
+
+| Rol | Email | Clave |
+|---|---|---|
+| `administrador` | `admin@condotrack.cl` | `password123` |
+| `residente` | `demo@condotrack.cl` | `password123` |
+| `residente` | `vecino@condotrack.cl` | `password123` |
+
+Volver a correr los seeds no duplica nada y deja el rol de cada usuario como en la tabla.
+En **producción** los seeds no crean claves conocidas ni datos de ejemplo: solo el administrador, con
+`SEED_ADMIN_PASSWORD` (obligatoria) y `SEED_ADMIN_EMAIL` (opcional, por defecto `admin@condotrack.cl`).
 
 ## Tests, lint y seguridad
 
@@ -227,8 +236,15 @@ URL: <https://apicondotrack.frubilarz.cl> · Health check: <https://apicondotrac
 ## Credenciales de prueba
 
 En producción no hay usuarios precargados (las seeds no se ejecutan solas en el deploy) — la API
-permite registro abierto. En desarrollo, `bin/rails db:seed` crea los usuarios demo (ver arriba).
-Para probar la API en producción:
+permite registro abierto y todo registro nuevo es `residente`. En desarrollo, `bin/rails db:seed` crea un
+usuario por rol (ver arriba). El administrador de producción se crea una sola vez, con una clave que se elige
+en ese momento:
+
+```bash
+docker exec -e SEED_ADMIN_PASSWORD=<clave> condotrack-backend bin/rails db:seed
+```
+
+Para probar la API en producción como residente:
 
 ```bash
 curl -X POST https://apicondotrack.frubilarz.cl/signup \
