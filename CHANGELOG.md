@@ -23,6 +23,15 @@ Rama: `feature/roles-migracion` · Primer paso de la sección 7 del enunciado (r
 La restricción por dueño (Tarea 1) se mantiene: el administrador **no** edita ni borra contenido ajeno, solo gestiona el estado. Matriz completa en el README.
 Tests: 12 nuevos en `autorizacion_test.rb` (55 en total, 140 aserciones). Si se quitan los guards, fallan 3 tests (categorías) y 1 (estado).
 
+### Seeds por rol (rama `feature/seeds-por-rol`)
+
+| # | Cambio | Dónde |
+|---|---|---|
+| 7 | Los seeds crean un **administrador** (`admin@condotrack.cl`) además de los dos residentes. Vuelven a fijar el rol en cada ejecución, así que son idempotentes y corrigen un rol cambiado a mano. | `db/seeds.rb` |
+| 8 | En **producción** los seeds no cargan datos de ejemplo ni claves conocidas: solo crean el administrador con `SEED_ADMIN_PASSWORD` (obligatoria; aborta si falta). | `db/seeds.rb` |
+
+Tests: 5 nuevos en `test/seeds_test.rb` (60 en total, 160 aserciones).
+
 ### Seguridad
 
 - El signup **no permite `rol`** en los parámetros: todo usuario nuevo es `residente`. Si se aceptara, cualquiera podría registrarse como administrador. Hay un test que lo verifica y falla si se agrega `:rol` a los params permitidos.
