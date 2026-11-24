@@ -61,7 +61,7 @@ Comentario
 
 ## Requisitos
 
-- Ruby 3.3.7 (ver `.ruby-version`)
+- Ruby 3.3.14 (ver `.ruby-version`)
 - PostgreSQL corriendo localmente (o `DATABASE_URL` apuntando a uno)
 - Bundler
 
@@ -185,7 +185,7 @@ Etapas que corren en **todas las ramas**:
 
 1. **Checkout**
 2. **Test DB** - levanta un PostgreSQL efimero (`postgres:16-alpine`) en la red `course-net`
-3. **Install deps** - `bundle install` dentro de `ruby:3.3.7-slim` (gems cacheadas en el volumen `condotrack-backend-bundle`)
+3. **Install deps** - `bundle install` dentro de `ruby:3.3.14-slim` (gems cacheadas en el volumen `condotrack-backend-bundle`)
 4. **Lint** - `bin/rubocop`
 5. **Security** - `bin/brakeman` + `bin/bundler-audit`
 6. **Test** - `bin/rails db:test:prepare test`

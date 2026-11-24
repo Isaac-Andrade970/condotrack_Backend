@@ -22,7 +22,7 @@ pipeline {
         DOCKER_NETWORK   = 'course-net'
         APP_NAME         = 'condotrack-backend'
         POSTGRES_IMAGE   = 'postgres:16-alpine'
-        RUBY_IMAGE       = 'ruby:3.3.7-slim'
+        RUBY_IMAGE       = 'ruby:3.3.14-slim'
         BUNDLE_VOLUME    = 'condotrack-backend-bundle'
         DEPLOY_PORT      = '4100'
     }
