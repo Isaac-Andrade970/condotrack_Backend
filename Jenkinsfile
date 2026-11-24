@@ -150,6 +150,11 @@ pipeline {
 
     post {
         always {
+            // Las etapas de CI corren como root dentro del contenedor y dejan archivos suyos en
+            // el workspace (tmp/cache, bootsnap, log...). Jenkins (uid 1000) no puede borrarlos
+            // en el checkout siguiente y el build falla (pasó con el build de production del 26 de oct).
+            // Se devuelven a uid 1000 al terminar; con `|| true` este paso nunca falla el build.
+            sh 'docker run --rm -v "$WORKSPACE:/w" alpine chown -R 1000:1000 /w >/dev/null 2>&1 || true'
             sh 'docker rm -f "$DB_CONTAINER" >/dev/null 2>&1 || true'
             sh 'docker image prune -f --filter "label=service=$APP_NAME" >/dev/null 2>&1 || true'
         }
