@@ -29,11 +29,13 @@ class AuthController < ApplicationController
 
   private
 
+  # No se permite :rol: todo usuario nuevo nace "residente" (el default de la
+  # columna). Si se aceptara, cualquiera podría registrarse como administrador.
   def user_params
     params.permit(:email, :password, :nombre)
   end
 
   def user_response(user)
-    { id: user.id, email: user.email, nombre: user.nombre }
+    { id: user.id, email: user.email, nombre: user.nombre, rol: user.rol }
   end
 end

@@ -4,6 +4,7 @@ class RecursosTest < ActionDispatch::IntegrationTest
   setup do
     @autor = crear_usuario(nombre: "Autor")
     @otro = crear_usuario(nombre: "Otro")
+    @admin = crear_usuario(nombre: "Admin", rol: "administrador")
     @categoria = crear_categoria
     @reporte = crear_reporte(usuario: @autor, categoria: @categoria)
   end
@@ -11,7 +12,7 @@ class RecursosTest < ActionDispatch::IntegrationTest
   # --- Categorías -------------------------------------------------------
 
   test "DELETE /categorias/:id con reportes asociados responde 409 y no la borra" do
-    delete "/categorias/#{@categoria.id}", headers: auth_headers(@autor)
+    delete "/categorias/#{@categoria.id}", headers: auth_headers(@admin)
 
     assert_response :conflict
     assert_match(/reportes asociados/, response.parsed_body["errors"].first)
@@ -21,14 +22,14 @@ class RecursosTest < ActionDispatch::IntegrationTest
   test "DELETE /categorias/:id sin reportes responde 204" do
     libre = crear_categoria
 
-    delete "/categorias/#{libre.id}", headers: auth_headers(@autor)
+    delete "/categorias/#{libre.id}", headers: auth_headers(@admin)
 
     assert_response :no_content
     assert_not Categoria.exists?(libre.id)
   end
 
   test "POST /categorias con nombre duplicado responde 422" do
-    post "/categorias", params: { nombre: @categoria.nombre }, headers: auth_headers(@autor), as: :json
+    post "/categorias", params: { nombre: @categoria.nombre }, headers: auth_headers(@admin), as: :json
 
     assert_response :unprocessable_entity
   end

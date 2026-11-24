@@ -53,6 +53,43 @@ class AuthTest < ActionDispatch::IntegrationTest
     assert_equal "Isaac", response.parsed_body["nombre"]
   end
 
+  test "POST /signup crea al usuario como residente y devuelve su rol" do
+    post "/signup", params: { email: "nuevo@test.cl", password: "password123", nombre: "Nuevo" }, as: :json
+
+    assert_response :created
+    assert_equal "residente", response.parsed_body.dig("user", "rol")
+  end
+
+  test "POST /signup ignora el rol enviado: nadie se registra como administrador" do
+    post "/signup",
+      params: { email: "intruso@test.cl", password: "password123", nombre: "Intruso", rol: "administrador" },
+      as: :json
+
+    assert_response :created
+    assert_equal "residente", response.parsed_body.dig("user", "rol")
+    assert_equal "residente", User.find_by!(email: "intruso@test.cl").rol
+  end
+
+  test "POST /login devuelve el rol de cada usuario" do
+    crear_usuario(email: "residente@test.cl", password: "password123")
+    crear_usuario(email: "admin@test.cl", password: "password123", rol: "administrador")
+
+    post "/login", params: { email: "residente@test.cl", password: "password123" }, as: :json
+    assert_equal "residente", response.parsed_body.dig("user", "rol")
+
+    post "/login", params: { email: "admin@test.cl", password: "password123" }, as: :json
+    assert_equal "administrador", response.parsed_body.dig("user", "rol")
+  end
+
+  test "GET /me devuelve el rol del usuario autenticado" do
+    admin = crear_usuario(rol: "administrador")
+
+    get "/me", headers: auth_headers(admin)
+
+    assert_response :ok
+    assert_equal "administrador", response.parsed_body["rol"]
+  end
+
   test "un token expirado o manipulado responde 401" do
     usuario = crear_usuario
     expirado = JsonWebToken.encode({ user_id: usuario.id }, 1.hour.ago)

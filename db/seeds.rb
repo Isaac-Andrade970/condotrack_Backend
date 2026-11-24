@@ -2,18 +2,41 @@
 # Es idempotente: se puede ejecutar varias veces con `bin/rails db:seed`.
 #
 # Usuarios de prueba (solo demo, no usar estas claves en un entorno real):
-#   demo@condotrack.cl   / password123
-#   vecino@condotrack.cl / password123
+#   admin@condotrack.cl  / password123  (rol administrador)
+#   demo@condotrack.cl   / password123  (rol residente)
+#   vecino@condotrack.cl / password123  (rol residente)
+#
+# En producción NO se crean claves conocidas: solo el administrador, con la clave
+# que se pase en SEED_ADMIN_PASSWORD (y SEED_ADMIN_EMAIL, opcional):
+#   SEED_ADMIN_PASSWORD=... bin/rails db:seed
 
-demo = User.find_or_create_by!(email: "demo@condotrack.cl") do |u|
-  u.nombre = "Usuario Demo"
-  u.password = "password123"
+# Crea el usuario si no existe y siempre deja el rol indicado (así volver a correr
+# los seeds corrige un rol cambiado a mano). La clave solo se fija al crearlo.
+def sembrar_usuario(email:, nombre:, rol:, password:)
+  User.find_or_initialize_by(email: email).tap do |u|
+    u.nombre = nombre
+    u.rol = rol
+    u.password = password if u.new_record?
+    u.save!
+  end
 end
 
-vecino = User.find_or_create_by!(email: "vecino@condotrack.cl") do |u|
-  u.nombre = "Vecino Demo"
-  u.password = "password123"
+if Rails.env.production?
+  password = ENV["SEED_ADMIN_PASSWORD"]
+  abort "En producción defina SEED_ADMIN_PASSWORD para crear el administrador." if password.blank?
+
+  sembrar_usuario(email: ENV.fetch("SEED_ADMIN_EMAIL", "admin@condotrack.cl"),
+    nombre: "Administrador", rol: "administrador", password: password)
+  puts "Administrador listo. No se cargaron datos de ejemplo en producción."
+  return
 end
+
+admin = sembrar_usuario(email: "admin@condotrack.cl", nombre: "Administrador Demo",
+  rol: "administrador", password: "password123")
+demo = sembrar_usuario(email: "demo@condotrack.cl", nombre: "Usuario Demo",
+  rol: "residente", password: "password123")
+vecino = sembrar_usuario(email: "vecino@condotrack.cl", nombre: "Vecino Demo",
+  rol: "residente", password: "password123")
 
 categorias = {
   "Ascensores" => "Fallas o detenciones de ascensores",
@@ -45,5 +68,5 @@ Comentario.find_or_create_by!(reporte: reportes[0], contenido: "Ya llamamos al t
   c.usuario = vecino
 end
 Comentario.find_or_create_by!(reporte: reportes[1], contenido: "Gracias por avisar, lo revisamos hoy.") do |c|
-  c.usuario = demo
+  c.usuario = admin
 end

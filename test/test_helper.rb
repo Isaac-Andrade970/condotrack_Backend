@@ -11,8 +11,8 @@ module ActiveSupport
     fixtures :all
 
     # Helpers de datos: los tests crean sus propios registros (sin fixtures).
-    def crear_usuario(email: "user#{SecureRandom.hex(3)}@test.cl", nombre: "Usuario Test", password: "password123")
-      User.create!(email: email, nombre: nombre, password: password)
+    def crear_usuario(email: "user#{SecureRandom.hex(3)}@test.cl", nombre: "Usuario Test", password: "password123", rol: "residente")
+      User.create!(email: email, nombre: nombre, password: password, rol: rol)
     end
 
     def crear_categoria(nombre: "Categoria #{SecureRandom.hex(3)}")

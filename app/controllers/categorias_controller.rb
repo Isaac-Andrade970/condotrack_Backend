@@ -1,4 +1,6 @@
 class CategoriasController < ApplicationController
+  # Cualquier usuario autenticado lista las categorías; solo el administrador las gestiona.
+  before_action :authorize_admin!, only: [ :create, :update, :destroy ]
   before_action :set_categoria, only: [ :update, :destroy ]
 
   def index

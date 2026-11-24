@@ -1,5 +1,50 @@
 # Changelog
 
+## Tarea 2 — roles de usuario (backend)
+
+Rama: `feature/roles-migracion` · Primer paso de la sección 7 del enunciado (roles y autorización). Las reglas de autorización por rol van en una rama aparte.
+
+### Agregado (feature)
+
+| # | Cambio | Dónde |
+|---|---|---|
+| 1 | Columna `users.rol` (`residente` por defecto, `administrador`) creada por migración, con **check constraint** en PostgreSQL. Los usuarios existentes quedan como `residente`. | migración `20261031000001`, `schema.rb`, `user.rb` |
+| 2 | `/login`, `/signup` y `/me` devuelven `rol` en el objeto `user`. | `auth_controller.rb` |
+| 3 | `User#administrador?` y la constante `User::ROLES`. | `user.rb` |
+
+### Autorización por rol (rama `feature/autorizacion-por-rol`)
+
+| # | Regla | Dónde |
+|---|---|---|
+| 4 | Crear, editar y eliminar **categorías** es solo para `administrador`; un residente recibe `403`. Listar sigue abierto. | `categorias_controller.rb` |
+| 5 | Un `administrador` puede cambiar el **estado** de cualquier reporte. Si envía campos de contenido de un reporte ajeno (`titulo`, `descripcion`, `torre_unidad`, `categoria_id`) recibe `403`. | `reportes_controller.rb` |
+| 6 | Helpers `authorize_admin!` y `render_forbidden`. | `application_controller.rb` |
+
+La restricción por dueño (Tarea 1) se mantiene: el administrador **no** edita ni borra contenido ajeno, solo gestiona el estado. Matriz completa en el README.
+Tests: 12 nuevos en `autorizacion_test.rb` (55 en total, 140 aserciones). Si se quitan los guards, fallan 3 tests (categorías) y 1 (estado).
+
+### Seeds por rol (rama `feature/seeds-por-rol`)
+
+| # | Cambio | Dónde |
+|---|---|---|
+| 7 | Los seeds crean un **administrador** (`admin@condotrack.cl`) además de los dos residentes. Vuelven a fijar el rol en cada ejecución, así que son idempotentes y corrigen un rol cambiado a mano. | `db/seeds.rb` |
+| 8 | En **producción** los seeds no cargan datos de ejemplo ni claves conocidas: solo crean el administrador con `SEED_ADMIN_PASSWORD` (obligatoria; aborta si falta). | `db/seeds.rb` |
+
+Tests: 5 nuevos en `test/seeds_test.rb` (60 en total, 160 aserciones).
+
+### Seguridad
+
+- El signup **no permite `rol`** en los parámetros: todo usuario nuevo es `residente`. Si se aceptara, cualquiera podría registrarse como administrador. Hay un test que lo verifica y falla si se agrega `:rol` a los params permitidos.
+
+### Tests
+
+6 tests nuevos (43 en total, 109 aserciones): rol en `/signup`, `/login` y `/me`, el signup que ignora el rol, el modelo y el check constraint de la base.
+
+### Qué no hace todavía
+
+- No hay seeds por rol ni usuario administrador: va en `feature/seeds-por-rol`. Hasta entonces no existe ningún administrador.
+- Al desplegar, la migración se aplica sola al arrancar el contenedor.
+
 ## Correcciones del feedback de la Tarea 1 — backend
 
 Rama: `fix/backend-feedback-tarea1` · Responde a los puntos de la sección B del feedback del docente.

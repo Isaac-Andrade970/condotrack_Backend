@@ -39,8 +39,9 @@ El backend no mantiene sesión de servidor: autentica cada request vía JWT firm
 ## Modelo de datos
 
 ```
-User (residentes/conserjería, sin roles todavía)
+User (residentes y administración)
  │ email:string único · password_digest:string · nombre:string
+ │ rol:string (residente | administrador, por defecto residente)
  │
  │ 1:N
  ▼
@@ -60,7 +61,7 @@ Comentario
 
 ## Requisitos
 
-- Ruby 3.3.7 (ver `.ruby-version`)
+- Ruby 3.3.14 (ver `.ruby-version`)
 - PostgreSQL corriendo localmente (o `DATABASE_URL` apuntando a uno)
 - Bundler
 
@@ -89,13 +90,34 @@ Endpoints base:
 Reglas de la API:
 
 - Todo (salvo `/signup`, `/login`, `/health` y `/up`) requiere `Authorization: Bearer <token>`; sin token → `401`.
+- Cada usuario tiene un **rol** (`residente` o `administrador`) guardado en `users.rol`. `/login`, `/signup` y `/me`
+  devuelven `rol` dentro de `user`. El signup **ignora** cualquier `rol` enviado: todo usuario nuevo es `residente`.
 - Solo el **autor** puede editar o eliminar un reporte o un comentario; otro usuario → `403`.
+- Crear, editar y eliminar **categorías** es solo para el rol `administrador`; un residente recibe `403`
+  (listar sigue abierto a cualquier usuario autenticado).
+- Un `administrador` puede cambiar el **estado** de cualquier reporte (`PATCH` solo con `estado`). Si el `PATCH`
+  de un reporte ajeno trae `titulo`, `descripcion`, `torre_unidad` o `categoria_id` → `403`. Tampoco puede
+  eliminarlo ni tocar comentarios ajenos.
 - `DELETE /categorias/:id` con reportes asociados → `409` (no se borra).
 - Errores en JSON: `404` (recurso o ruta inexistente), `400` (JSON mal formado), `422` (validación, con `errors`).
 - Los listados (`/reportes`, `/categorias`, comentarios) aceptan paginación opcional con
   `?page=1&per_page=20` (máx. 100) y devuelven el total en el header `X-Total-Count`.
   Sin esos parámetros devuelven todo, ordenado.
 - Los comentarios incluyen `usuario_nombre` (nombre del autor).
+
+## Permisos por rol
+
+| Acción | Sin sesión | Residente | Administrador |
+|---|---|---|---|
+| Registrarse / iniciar sesión | Sí | — | — |
+| Ver reportes, categorías y comentarios | `401` | Sí | Sí |
+| Crear reporte y comentario | `401` | Sí | Sí |
+| Editar o eliminar **su** reporte / comentario | `401` | Sí | Sí |
+| Editar o eliminar reporte / comentario **ajeno** | `401` | `403` | `403` |
+| Cambiar el **estado** de un reporte ajeno | `401` | `403` | Sí |
+| Crear, editar o eliminar categorías | `401` | `403` | Sí |
+
+`401` = sin token válido. `403` = autenticado, pero sin permiso para esa acción.
 
 ## Variables de entorno
 
@@ -109,8 +131,17 @@ Reglas de la API:
 
 ## Datos de ejemplo (seeds)
 
-`bin/rails db:seed` crea (de forma idempotente) 2 usuarios, 5 categorías, 3 reportes y 2 comentarios.
-Usuarios de prueba: `demo@condotrack.cl` y `vecino@condotrack.cl`, ambos con clave `password123`.
+`bin/rails db:seed` crea (de forma idempotente) 3 usuarios, 5 categorías, 3 reportes y 2 comentarios.
+
+| Rol | Email | Clave |
+|---|---|---|
+| `administrador` | `admin@condotrack.cl` | `password123` |
+| `residente` | `demo@condotrack.cl` | `password123` |
+| `residente` | `vecino@condotrack.cl` | `password123` |
+
+Volver a correr los seeds no duplica nada y deja el rol de cada usuario como en la tabla.
+En **producción** los seeds no crean claves conocidas ni datos de ejemplo: solo el administrador, con
+`SEED_ADMIN_PASSWORD` (obligatoria) y `SEED_ADMIN_EMAIL` (opcional, por defecto `admin@condotrack.cl`).
 
 ## Tests, lint y seguridad
 
@@ -154,7 +185,7 @@ Etapas que corren en **todas las ramas**:
 
 1. **Checkout**
 2. **Test DB** - levanta un PostgreSQL efimero (`postgres:16-alpine`) en la red `course-net`
-3. **Install deps** - `bundle install` dentro de `ruby:3.3.7-slim` (gems cacheadas en el volumen `condotrack-backend-bundle`)
+3. **Install deps** - `bundle install` dentro de `ruby:3.3.14-slim` (gems cacheadas en el volumen `condotrack-backend-bundle`)
 4. **Lint** - `bin/rubocop`
 5. **Security** - `bin/brakeman` + `bin/bundler-audit`
 6. **Test** - `bin/rails db:test:prepare test`
@@ -205,8 +236,15 @@ URL: <https://apicondotrack.frubilarz.cl> · Health check: <https://apicondotrac
 ## Credenciales de prueba
 
 En producción no hay usuarios precargados (las seeds no se ejecutan solas en el deploy) — la API
-permite registro abierto. En desarrollo, `bin/rails db:seed` crea los usuarios demo (ver arriba).
-Para probar la API en producción:
+permite registro abierto y todo registro nuevo es `residente`. En desarrollo, `bin/rails db:seed` crea un
+usuario por rol (ver arriba). El administrador de producción se crea una sola vez, con una clave que se elige
+en ese momento:
+
+```bash
+docker exec -e SEED_ADMIN_PASSWORD=<clave> condotrack-backend bin/rails db:seed
+```
+
+Para probar la API en producción como residente:
 
 ```bash
 curl -X POST https://apicondotrack.frubilarz.cl/signup \

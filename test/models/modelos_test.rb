@@ -18,6 +18,22 @@ class ModelosTest < ActiveSupport::TestCase
     assert_not usuario.authenticate("otra-clave")
   end
 
+  test "User nace como residente y solo acepta los roles definidos" do
+    assert_equal "residente", crear_usuario.rol
+    assert crear_usuario(rol: "administrador").administrador?
+    assert_not crear_usuario.administrador?
+
+    assert_not User.new(email: "r@test.cl", nombre: "X", password: "password123", rol: "inventado").valid?
+  end
+
+  test "la base de datos también rechaza roles inválidos (check constraint)" do
+    usuario = crear_usuario
+
+    assert_raises(ActiveRecord::StatementInvalid) do
+      usuario.update_column(:rol, "inventado")
+    end
+  end
+
   test "Categoria exige nombre único" do
     crear_categoria(nombre: "Ascensores")
 
